@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Chat - Modern Omegle Clone</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* ADDED: Missing Modal Logic to prevent errors */
+        .modal {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        /* Your existing styles */
+        .ai-highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
+            border: 2px solid #10b981;
+            transform: scale(1.02);
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-highlight::after {
+            content: '⚡ INSTANT';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            animation: flash 2s infinite;
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card">
+            <div class="header animate__animated animate__fadeIn">
+                <div class="logo">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h1 class="tagline">Chat Instantly with Strangers & AI</h1>
+                <p>No waiting. No registration. Completely anonymous.</p>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-value" id="onlineCount">0</div>
+                        <div class="stat-label">Online Now</div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bolt"></i>
+                        <div class="stat-value">&lt;0.5s</div>
+                        <div class="stat-label">AI Speed</div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-globe"></i>
+                        <div class="stat-value">100+</div>
+                        <div class="stat-label">Countries</div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-robot"></i>
+                        <div class="stat-value">24/7</div>
+                        <div class="stat-label">AI Online</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <h2 class="section-title animate__animated animate__fadeInUp">Start Chatting Instantly</h2>
+                
+                <div class="quick-actions">
+                    <div class="action-card instant ai-highlight" onclick="startInstantAI()">
+                        <i class="fas fa-bolt"></i>
+                        <h3 class="action-title">Instant AI Chat</h3>
+                        <p class="action-desc">
+                            Connect with AI instantly! No waiting time. 
+                            Perfect for testing or when no humans are available.
+                            <strong>Connects in less than 0.5 seconds!</strong>
+                        </p>
+                        <button class="btn btn-success btn-block">
+                            <i class="fas fa-robot"></i> Start AI Chat NOW
+                        </button>
+                    </div>
+                    
+                    <div class="action-card video" onclick="startVideoChat()">
+                        <i class="fas fa-video"></i>
+                        <h3 class="action-title">Video Chat</h3>
+                        <p class="action-desc">
+                            Enable webcam and microphone for face-to-face conversations.
+                            Connect with real people from around the world.
+                        </p>
+                        <button class="btn btn-primary btn-block">
+                            <i class="fas fa-camera"></i> Start Video Chat
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>© 2024 Instant Chat Platform | For Educational Purposes Only</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()" style="position:absolute; right:15px; top:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+            <h2 style="margin-bottom: 20px;">
+                <i class="fas fa-video"></i> Video Chat Setup
+            </h2>
+            
+            <div id="permissionAlert" class="alert alert-warning" style="background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:15px;">
+                <p>Please allow camera and microphone access for video chat.</p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <video id="cameraPreview" autoplay muted 
+                       style="width: 100%; height: 250px; background: #333; 
+                              border-radius: 10px; margin-top: 10px;"></video>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="startCameraPreview()" style="flex:1; padding:10px; cursor:pointer;">Test Camera</button>
+                <button class="btn btn-success" onclick="startVideoChatNow()" style="flex:1; padding:10px; cursor:pointer;">Start Chat</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        let mediaStream = null;
+
+        function updateStats() {
+            fetch('/api/status').then(res => res.json()).then(data => {
+                document.getElementById('onlineCount').textContent = data.users || Math.floor(Math.random() * 500);
+            }).catch(() => {});
+            setTimeout(updateStats, 10000);
+        }
+
+        function startInstantAI() {
+            socket.emit('start_ai_chat');
+            socket.once('ai_connected', (data) => {
+                window.location.href = `/chat?room=${data.room_id}&ai=true`;
+            });
+        }
+
+        function startVideoChat() {
+            document.getElementById('videoModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('videoModal').classList.remove('active');
+            stopCamera();
+        }
+
+        async function startCameraPreview() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('cameraPreview').srcObject = mediaStream;
+                document.getElementById('permissionAlert').innerHTML = "Camera Ready!";
+                document.getElementById('permissionAlert').style.background = "#d4edda";
+            } catch (err) {
+                document.getElementById('permissionAlert').innerHTML = "Error: Access Denied";
+                document.getElementById('permissionAlert').style.background = "#f8d7da";
+            }
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function startVideoChatNow() {
+            window.location.href = '/chat?video=true';
+        }
+
+        document.addEventListener('DOMContentLoaded', updateStats);
+    </script>
+</body>
+</html>

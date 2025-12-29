@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chat Room - Instant Connection</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+
+        .typing-container {
+
+            padding: 15px 25px;
+
+            min-height: 60px;
+
+        }
+
+       
+
+        .quick-actions-bar {
+
+            display: flex;
+
+            gap: 10px;
+
+            padding: 15px 25px;
+
+            background: white;
+
+            border-top: 1px solid var(--gray-light);
+
+            flex-wrap: wrap;
+
+        }
+
+       
+
+        .quick-btn {
+
+            padding: 10px 20px;
+
+            background: var(--gray-light);
+
+            border: none;
+
+            border-radius: 50px;
+
+            cursor: pointer;
+
+            transition: all 0.2s;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+        }
+
+       
+
+        .quick-btn:hover {
+
+            background: var(--primary);
+
+            color: white;
+
+            transform: translateY(-2px);
+
+        }
+
+       
+
+        .video-container {
+
+            display: none;
+
+        }
+
+       
+
+        .chat-active .video-container {
+
+            display: grid;
+
+        }
+
+       
+
+        .chat-active .chat-messages {
+
+            display: none;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="chat-container" id="chatApp">
+
+        <!-- Header -->
+
+        <div class="chat-header">
+
+            <div class="partner-info">
+
+                <div class="partner-avatar" id="partnerAvatar">
+
+                    <i class="fas fa-user"></i>
+
+                </div>
+
+                <div>
+
+                    <div class="partner-name" id="partnerName">Connecting...</div>
+
+                    <div class="partner-status">
+
+                        <div class="status-dot"></div>
+
+                        <span id="statusText">Connecting...</span>
+
+                        <span id="aiBadge" style="display: none;" class="badge">🤖 AI</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+           
+
+            <div style="display: flex; gap: 15px;">
+
+                <button class="btn btn-warning" onclick="nextStranger()">
+
+                    <i class="fas fa-forward"></i> Next
+
+                </button>
+
+                <button class="btn btn-primary" onclick="toggleVideo()" id="videoToggle">
+
+                    <i class="fas fa-video"></i> Video
+
+                </button>
+
+                <button class="btn btn-danger" onclick="leaveChat()">
+
+                    <i class="fas fa-sign-out-alt"></i> Leave
+
+                </button>
+
+            </div>
+
+        </div>
+
+       
+
+        <!-- Video Chat (Hidden by default) -->
+
+        <div class="video-container" id="videoContainer">
+
+            <div class="video-box">
+
+                <video id="localVideo" autoplay muted></video>
+
+                <div class="video-label">You</div>
+
+            </div>
+
+            <div class="video-box">
+
+                <video id="remoteVideo" autoplay></video>
+
+                <div class="video-label">Stranger</div>
+
+            </div>
+
+        </div>
+
+       
+
+        <!-- Video Controls -->
+
+        <div class="video-controls" id="videoControls" style="display: none;">
+
+            <button class="control-btn" onclick="toggleMic()" id="micToggle">
+
+                <i class="fas fa-microphone"></i>
+
+            </button>
+
+            <button class="control-btn" onclick="toggleCamera()" id="cameraToggle">
+
+                <i class="fas fa-video"></i>
+
+            </button>
+
+            <button class="control-btn danger" onclick="toggleVideo()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+        </div>
+
+       
+
+        <!-- Messages -->
+
+        <div class="chat-messages" id="chatMessages">
+
+            <!-- Messages will appear here -->
+
+        </div>
+
+       
+
+        <!-- Typing Indicator -->
+
+        <div class="typing-container" id="typingIndicator" style="display: none;">
+
+            <div class="typing-indicator">
+
+                <div class="typing-dot"></div>
+
+                <div class="typing-dot"></div>
+
+                <div class="typing-dot"></div>
+
+                <span style="margin-left: 10px;">Stranger is typing...</span>
+
+            </div>
+
+        </div>
+
+       
+
+        <!-- Quick Actions -->
+
+        <div class="quick-actions-bar" id="quickActions">
+
+            <button class="quick-btn" onclick="sendQuick('👋 Hello!')">
+
+                <i class="fas fa-hand"></i> Hello
+
+            </button>
+
+            <button class="quick-btn" onclick="sendQuick('😊 How are you?')">
+
+                <i class="fas fa-smile"></i> How are you?
+
+            </button>
+
+            <button class="quick-btn" onclick="sendQuick('🤔 Tell me about yourself')">
+
+                <i class="fas fa-user"></i> About you
+
+            </button>
+
+            <button class="quick-btn" onclick="sendQuick('😂 Tell me a joke!')">
+
+                <i class="fas fa-laugh"></i> Joke
+
+            </button>
+
+        </div>
+
+       
+
+        <!-- Input Area -->
+
+        <div class="chat-input-area">
+
+            <div class="input-group">
+
+                <input type="text" id="messageInput" placeholder="Type your message here..."
+
+                       autocomplete="off" autofocus onkeypress="handleKeyPress(event)">
+
+                <button class="btn btn-primary" onclick="sendMessage()">
+
+                    <i class="fas fa-paper-plane"></i> Send
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+   
+
+    <!-- Scripts -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+
+    <script>
+
+        // Get URL parameters
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        let roomId = urlParams.get('room') || null;
+
+        const isAI = urlParams.get('ai') === 'true';
+
+        const isVideo = urlParams.get('video') === 'true';
+
+        const isInstant = urlParams.get('instant') === 'true';
+
+       
+
+        // Socket connection
+
+        const socket = io();
+
+        let connected = false;
+
+        let localStream = null;
+
+        let isVideoActive = false;
+
+       // ------------------ WebRTC Globals ------------------
+
+let peerConnection = null;
+let remoteStream = null;
+
+const rtcConfig = {
+    iceServers: [
+        { urls: "stun:stun.l.google.com:19302" }
+    ]
+};
+ function createPeerConnection() {
+    peerConnection = new RTCPeerConnection(rtcConfig);
+
+    remoteStream = new MediaStream();
+    document.getElementById("remoteVideo").srcObject = remoteStream;
+
+    peerConnection.ontrack = (event) => {
+        event.streams[0].getTracks().forEach(track => {
+            remoteStream.addTrack(track);
+        });
+    };
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+            socket.emit("webrtc_ice_candidate", event.candidate);
+        }
+    };
+}
+function cleanupWebRTC() {
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+}
+
+
+
+        // DOM Elements
+
+        const chatMessages = document.getElementById('chatMessages');
+
+        const messageInput = document.getElementById('messageInput');
+
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        const partnerName = document.getElementById('partnerName');
+
+        const statusText = document.getElementById('statusText');
+
+        const partnerAvatar = document.getElementById('partnerAvatar');
+
+        const aiBadge = document.getElementById('aiBadge');
+
+        const quickActions = document.getElementById('quickActions');
+
+       
+
+        // Initialize
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Set partner info
+
+            if (isAI) {
+
+                partnerName.textContent = 'AI Assistant';
+
+                partnerAvatar.innerHTML = '<i class="fas fa-robot"></i>';
+
+                aiBadge.style.display = 'inline-block';
+
+                statusText.textContent = 'Online';
+
+               
+
+                // Show instant connection message
+
+                if (isInstant) {
+
+                    addSystemMessage('⚡ Connected to AI instantly!');
+
+                    addMessage('👋 Hi! I\'m your AI chat partner. How can I help you today?', 'stranger', true);
+
+                } else {
+
+                    addSystemMessage('Connected to AI');
+
+                    addMessage('Hello! I\'m ready to chat!', 'stranger', true);
+
+                }
+
+               
+
+                // Show quick actions for AI
+
+                quickActions.style.display = 'flex';
+
+            } else {
+
+                partnerName.textContent = 'Stranger';
+
+                statusText.textContent = 'Connecting...';
+
+                quickActions.style.display = 'none';
+
+            }
+
+           
+
+            // Connect socket
+
+            socket.connect();
+
+            setupSocketEvents();
+
+           
+
+            // Focus input
+
+            messageInput.focus();
+
+           
+
+            // If video mode requested, enable video
+
+            if (isVideo) {
+
+                setTimeout(() => {
+
+                    toggleVideo();
+
+                }, 1000);
+
+            }
+            if (!isAI) {
+    socket.emit("find_human");
+}
+
+        });
+
+       
+
+        // Socket event handlers
+function setupSocketEvents() {
+
+    socket.on('connect', () => {
+        console.log('Connected to chat server');
+        connected = true;
+        statusText.textContent = 'Searching...';
+    });
+
+    socket.on("waiting", () => {
+        addSystemMessage("⏳ Waiting for a stranger...");
+    });
+
+    socket.on("human_matched", (data) => {
+        roomId = data.room_id;
+        socket.emit("join_room", { room: roomId });
+
+        addSystemMessage("🤝 Stranger connected!");
+        statusText.textContent = "Connected";
+    });
+
+    socket.on("partner_left", () => {
+        addSystemMessage("❌ Stranger disconnected");
+        statusText.textContent = "Searching...";
+        cleanupWebRTC();
+    });
+
+    socket.on('new_message', (data) => {
+        addMessage(data.text, data.sender);
+    });
+
+    socket.on('ai_message', (data) => {
+        addMessage(data.text, 'stranger', true);
+        hideTyping();
+    });
+
+    socket.on('video_permission_granted', () => {
+        startVideoChat();
+    });
+    socket.on("webrtc_offer", async (offer) => {
+    if (!peerConnection) createPeerConnection();
+
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+    localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+    });
+
+    document.getElementById("localVideo").srcObject = localStream;
+
+    localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+    });
+
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+
+    socket.emit("webrtc_answer", answer);
+});
+
+socket.on("webrtc_answer", async (answer) => {
+    await peerConnection.setRemoteDescription(
+        new RTCSessionDescription(answer)
+    );
+});
+
+socket.on("webrtc_ice_candidate", async (candidate) => {
+    if (peerConnection) {
+        await peerConnection.addIceCandidate(candidate);
+    }
+});
+
+}
+
+
+
+        
+
+       
+
+        // Add message to chat
+
+        function addMessage(text, sender, isAI = false) {
+
+            const messageDiv = document.createElement('div');
+
+            messageDiv.className = `message ${sender === 'user' ? 'user' : 'stranger'} ${isAI ? 'ai' : ''}`;
+
+           
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            messageDiv.innerHTML = `
+
+                <div>${text}</div>
+
+                <div class="message-time">${time}</div>
+
+            `;
+
+           
+
+            chatMessages.appendChild(messageDiv);
+
+            scrollToBottom();
+
+        }
+
+       
+
+        // Add system message
+
+        function addSystemMessage(text) {
+
+            const messageDiv = document.createElement('div');
+
+            messageDiv.className = 'message system';
+
+            messageDiv.textContent = text;
+
+            chatMessages.appendChild(messageDiv);
+
+            scrollToBottom();
+
+        }
+
+       
+
+        // Send message
+
+        function sendMessage() {
+
+            const text = messageInput.value.trim();
+
+            if (!text) return;
+
+           
+
+            // Add to chat
+
+            addMessage(text, 'user');
+
+           
+
+            // Send via socket
+
+            if (connected) {
+
+                socket.emit('send_message', {
+
+                    room_id: roomId,
+
+                    message: text
+
+                });
+
+               
+
+                // If AI, show typing indicator
+
+                if (isAI) {
+
+                    showTyping();
+
+                }
+
+            }
+
+           
+
+            // Clear input
+
+            messageInput.value = '';
+
+            messageInput.focus();
+
+        }
+
+       
+
+        // Send quick reply
+
+    
+
+       
+
+        // Send quick message
+
+        function sendQuick(text) {
+
+            addMessage(text, 'user');
+
+           
+
+            if (connected) {
+
+                socket.emit('send_message', {
+
+                    room_id: roomId,
+
+                    message: text
+
+                });
+
+               
+
+                if (isAI) {
+
+                    showTyping();
+
+                }
+
+            }
+
+        }
+
+       
+
+        // Next stranger
+
+        function nextStranger() {
+    if (!isAI) {
+        chatMessages.innerHTML = "";
+        addSystemMessage("🔄 Finding new stranger...");
+        cleanupWebRTC();
+        socket.emit("next_human");
+        return;
+    }
+
+    window.location.href = '/';
+}
+
+
+
+
+       
+
+        // Leave chat
+
+        function leaveChat() {
+
+            if (localStream) {
+
+                localStream.getTracks().forEach(track => track.stop());
+
+            }
+            cleanupWebRTC();
+            window.location.href = '/';
+
+        }
+
+       
+
+        // Typing indicator
+
+        function showTyping() {
+
+            typingIndicator.style.display = 'block';
+
+            scrollToBottom();
+
+        }
+
+       
+
+        function hideTyping() {
+
+            typingIndicator.style.display = 'none';
+
+        }
+
+       
+
+        // Keyboard shortcut
+
+        function handleKeyPress(e) {
+
+            if (e.key === 'Enter' && !e.shiftKey) {
+
+                e.preventDefault();
+
+                sendMessage();
+
+            }
+
+        }
+
+       
+
+        // Scroll to bottom
+
+        function scrollToBottom() {
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        }
+
+       
+
+        // Video Chat Functions
+
+        async function toggleVideo() {
+
+            isVideoActive = !isVideoActive;
+
+            const chatApp = document.getElementById('chatApp');
+
+            const videoContainer = document.getElementById('videoContainer');
+
+            const videoControls = document.getElementById('videoControls');
+
+            const videoToggle = document.getElementById('videoToggle');
+
+           
+
+            if (isVideoActive) {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        });
+
+        document.getElementById("localVideo").srcObject = localStream;
+
+        createPeerConnection();
+
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+
+        if (connected && roomId) {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            socket.emit("webrtc_offer", offer);
+        }
+
+        chatApp.classList.add('chat-active');
+        videoControls.style.display = 'flex';
+
+        addSystemMessage("📹 Video chat started");
+
+    } catch (err) {
+        console.error(err);
+        addSystemMessage("❌ Camera/Mic permission denied");
+        isVideoActive = false;
+    }
+}
+else {
+
+                // Stop video
+
+                if (localStream) {
+
+                    localStream.getTracks().forEach(track => track.stop());
+
+                    localStream = null;
+
+                }
+
+               
+
+                chatApp.classList.remove('chat-active');
+
+                videoControls.style.display = 'none';
+
+                videoToggle.innerHTML = '<i class="fas fa-video"></i> Video';
+
+                videoToggle.className = 'btn btn-primary';
+
+               
+
+                addSystemMessage('📹 Video chat ended');
+
+            }
+
+        }
+
+       
+
+        function toggleMic() {
+
+            if (localStream) {
+
+                const audioTrack = localStream.getAudioTracks()[0];
+
+                if (audioTrack) {
+
+                    audioTrack.enabled = !audioTrack.enabled;
+
+                    const micToggle = document.getElementById('micToggle');
+
+                    micToggle.innerHTML = audioTrack.enabled ?
+
+                        '<i class="fas fa-microphone"></i>' :
+
+                        '<i class="fas fa-microphone-slash"></i>';
+
+                    micToggle.classList.toggle('active', audioTrack.enabled);
+
+                }
+
+            }
+
+        }
+
+       
+
+        function toggleCamera() {
+
+            if (localStream) {
+
+                const videoTrack = localStream.getVideoTracks()[0];
+
+                if (videoTrack) {
+
+                    videoTrack.enabled = !videoTrack.enabled;
+
+                    const cameraToggle = document.getElementById('cameraToggle');
+
+                    cameraToggle.innerHTML = videoTrack.enabled ?
+
+                        '<i class="fas fa-video"></i>' :
+
+                        '<i class="fas fa-video-slash"></i>';
+
+                    cameraToggle.classList.toggle('active', videoTrack.enabled);
+
+                }
+
+            }
+
+        }
+
+
+       
+
+        // Auto-scroll
+
+        const observer = new MutationObserver(scrollToBottom);
+
+        observer.observe(chatMessages, { childList: true });
+
+    </script>
+
+</body>
+
+</html>
