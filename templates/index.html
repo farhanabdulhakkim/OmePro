@@ -3,202 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Chat - Modern Omegle Clone</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>CONECTEEN • Instant Anonymous Video Chat</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Animate.css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
     <style>
-        /* ADDED: Missing Modal Logic to prevent errors */
-        .modal {
-            display: none; 
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        /* Landing page specific styles */
+        .landing-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-6);
         }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-        }
-        /* Your existing styles */
-        .ai-highlight {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
-            border: 2px solid #10b981;
-            transform: scale(1.02);
+        
+        .hero-section {
+            text-align: center;
+            padding: var(--space-32) var(--space-6);
             position: relative;
             overflow: hidden;
         }
-        .ai-highlight::after {
-            content: '⚡ INSTANT';
+        
+        .hero-background {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #10b981;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            animation: flash 2s infinite;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            z-index: -1;
         }
-        @keyframes flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        
+        .hero-logo {
+            font-size: 4rem;
+            margin-bottom: var(--space-6);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(3deg); }
+        }
+        
+        .hero-title {
+            font-size: var(--text-4xl);
+            font-weight: 800;
+            margin-bottom: var(--space-4);
+            color: var(--text-primary);
+        }
+        
+        .hero-subtitle {
+            font-size: var(--text-xl);
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto var(--space-12);
+            line-height: 1.6;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+            margin: var(--space-16) 0;
+        }
+        
+        .stat-card {
+            background: var(--bg-overlay);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-xl), var(--glow-primary);
+        }
+        
+        .stat-icon {
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-4);
+            color: var(--primary);
+        }
+        
+        .stat-number {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            margin-bottom: var(--space-2);
+            color: var(--text-primary);
+        }
+        
+        .stat-label {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-8);
+            margin: var(--space-16) 0;
+        }
+        
+        .feature-card {
+            background: var(--bg-overlay);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+            transition: all var(--transition-base);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .feature-icon {
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-4);
+            color: var(--primary);
+        }
+        
+        .feature-title {
+            font-size: var(--text-xl);
+            font-weight: 700;
+            margin-bottom: var(--space-3);
+            color: var(--text-primary);
+        }
+        
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .action-section {
+            text-align: center;
+            padding: var(--space-16) 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: var(--space-6);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--space-8);
+        }
+        
+        .action-btn {
+            padding: var(--space-4) var(--space-8);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--text-base);
+            text-decoration: none;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 200px;
+            justify-content: center;
+        }
+        
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .action-btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl), var(--glow-primary);
+        }
+        
+        .action-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+        
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary-light);
+            transform: translateY(-3px);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--text-muted);
+            font-size: var(--text-sm);
+            border-top: 1px solid var(--glass-border);
+            margin-top: var(--space-16);
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: var(--text-3xl);
+            }
+            
+            .hero-subtitle {
+                font-size: var(--text-lg);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="glass-card">
-            <div class="header animate__animated animate__fadeIn">
-                <div class="logo">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h1 class="tagline">Chat Instantly with Strangers & AI</h1>
-                <p>No waiting. No registration. Completely anonymous.</p>
-                
-                <div class="stats">
-                    <div class="stat-item">
+    <div class="landing-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-background"></div>
+            
+            <div class="hero-logo">
+                <i class="fas fa-comments"></i>
+            </div>
+            
+            <h1 class="hero-title animate__animated animate__fadeIn">
+                Connect Anonymously with Strangers
+            </h1>
+            
+            <p class="hero-subtitle animate__animated animate__fadeIn animate__delay-1s">
+                Experience premium video chat with complete privacy. No registration, 
+                no tracking, just genuine conversations with people from around the world.
+            </p>
+            
+            <!-- Live Stats -->
+            <div class="stats-grid animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-users"></i>
-                        <div class="stat-value" id="onlineCount">0</div>
-                        <div class="stat-label">Online Now</div>
                     </div>
-                    <div class="stat-item">
-                        <i class="fas fa-bolt"></i>
-                        <div class="stat-value">&lt;0.5s</div>
-                        <div class="stat-label">AI Speed</div>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-globe"></i>
-                        <div class="stat-value">100+</div>
-                        <div class="stat-label">Countries</div>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-robot"></i>
-                        <div class="stat-value">24/7</div>
-                        <div class="stat-label">AI Online</div>
-                    </div>
+                    <div class="stat-number" id="onlineCount">0</div>
+                    <div class="stat-label">Online Now</div>
                 </div>
-            </div>
-            
-            <div class="main-content">
-                <h2 class="section-title animate__animated animate__fadeInUp">Start Chatting Instantly</h2>
                 
-                <div class="quick-actions">
-                    <div class="action-card instant ai-highlight" onclick="startInstantAI()">
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-bolt"></i>
-                        <h3 class="action-title">Instant AI Chat</h3>
-                        <p class="action-desc">
-                            Connect with AI instantly! No waiting time. 
-                            Perfect for testing or when no humans are available.
-                            <strong>Connects in less than 0.5 seconds!</strong>
-                        </p>
-                        <button class="btn btn-success btn-block">
-                            <i class="fas fa-robot"></i> Start AI Chat NOW
-                        </button>
                     </div>
-                    
-                    <div class="action-card video" onclick="startVideoChat()">
-                        <i class="fas fa-video"></i>
-                        <h3 class="action-title">Video Chat</h3>
-                        <p class="action-desc">
-                            Enable webcam and microphone for face-to-face conversations.
-                            Connect with real people from around the world.
-                        </p>
-                        <button class="btn btn-primary btn-block">
-                            <i class="fas fa-camera"></i> Start Video Chat
-                        </button>
+                    <div class="stat-number">&lt;0.5s</div>
+                    <div class="stat-label">AI Speed</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-globe"></i>
                     </div>
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">Countries</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">AI Available</div>
                 </div>
             </div>
-            
-            <div class="footer">
-                <p>© 2024 Instant Chat Platform | For Educational Purposes Only</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal" id="videoModal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()" style="position:absolute; right:15px; top:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
-            <h2 style="margin-bottom: 20px;">
-                <i class="fas fa-video"></i> Video Chat Setup
+        </section>
+        
+        <!-- Features Section -->
+        <section class="features-section">
+            <h2 style="text-align: center; font-size: var(--text-3xl); font-weight: 700; margin-bottom: var(--space-12); color: var(--text-primary);">
+                Why Choose CONECTEEN?
             </h2>
             
-            <div id="permissionAlert" class="alert alert-warning" style="background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:15px;">
-                <p>Please allow camera and microphone access for video chat.</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Complete Privacy</h3>
+                    <p class="feature-description">
+                        Your conversations are completely anonymous. We don't store 
+                        chat logs or personal information.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h3 class="feature-title">Premium Video Quality</h3>
+                    <p class="feature-description">
+                        Crystal clear video calls with adaptive quality that 
+                        works on any connection.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="feature-title">Instant AI Chat</h3>
+                    <p class="feature-description">
+                        No waiting time. Connect with AI instantly for practice 
+                        or when humans aren't available.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Mobile Optimized</h3>
+                    <p class="feature-description">
+                    Beautifully designed for all devices. Works perfectly on 
+                    desktop, tablet, and mobile.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="feature-title">Lightning Fast</h3>
+                    <p class="feature-description">
+                        Connect in under a second. Our optimized servers ensure 
+                        minimal latency worldwide.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <h3 class="feature-title">Global Community</h3>
+                    <p class="feature-description">
+                        Meet people from all over the world. Break language 
+                        barriers with built-in translation.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Action Section -->
+        <section class="action-section">
+            <h2 style="font-size: var(--text-2xl); font-weight: 700; margin-bottom: var(--space-4); color: var(--text-primary);">
+                Ready to Connect?
+            </h2>
+            <p style="color: var(--text-secondary); margin-bottom: var(--space-8); max-width: 600px; margin-left: auto; margin-right: auto;">
+                Join thousands of users having meaningful conversations right now.
+            </p>
+            
+            <div class="action-buttons">
+                <a href="/chat?ai=true" class="action-btn primary">
+                    <i class="fas fa-robot"></i>
+                    <span>Chat with AI Instantly</span>
+                </a>
+                
+                <a href="/chat" class="action-btn secondary">
+                    <i class="fas fa-random"></i>
+                    <span>Connect with Stranger</span>
+                </a>
+                
+                <a href="/chat?video=true" class="action-btn secondary">
+                    <i class="fas fa-video"></i>
+                    <span>Start Video Chat</span>
+                </a>
             </div>
             
-            <div style="margin: 20px 0;">
-                <video id="cameraPreview" autoplay muted 
-                       style="width: 100%; height: 250px; background: #333; 
-                              border-radius: 10px; margin-top: 10px;"></video>
+            <div style="margin-top: var(--space-8);">
+                <div class="privacy-badge" style="display: inline-flex; margin: 0 var(--space-2);">
+                    <i class="fas fa-lock"></i>
+                    <span>No Registration Required</span>
+                </div>
+                
+                <div class="privacy-badge" style="display: inline-flex; margin: 0 var(--space-2); background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.2); color: var(--primary-light);">
+                    <i class="fas fa-user-secret"></i>
+                    <span>100% Anonymous</span>
+                </div>
             </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="startCameraPreview()" style="flex:1; padding:10px; cursor:pointer;">Test Camera</button>
-                <button class="btn btn-success" onclick="startVideoChatNow()" style="flex:1; padding:10px; cursor:pointer;">Start Chat</button>
-            </div>
-        </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2024 CONECTEEN • Premium Anonymous Chat Platform</p>
+            <p style="margin-top: var(--space-2); font-size: var(--text-xs); opacity: 0.7;">
+                For educational purposes only. Use responsibly.
+            </p>
+        </footer>
     </div>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- Scripts -->
     <script>
-        const socket = io();
-        let mediaStream = null;
-
-        function updateStats() {
-            fetch('/api/status').then(res => res.json()).then(data => {
-                document.getElementById('onlineCount').textContent = data.users || Math.floor(Math.random() * 500);
-            }).catch(() => {});
+        // Update live stats
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                document.getElementById('onlineCount').textContent = data.users || '500+';
+            } catch (error) {
+                console.log('Stats update failed');
+            }
+            
             setTimeout(updateStats, 10000);
         }
-
-        function startInstantAI() {
-            socket.emit('start_ai_chat');
-            socket.once('ai_connected', (data) => {
-                window.location.href = `/chat?room=${data.room_id}&ai=true`;
-            });
-        }
-
-        function startVideoChat() {
-            document.getElementById('videoModal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('videoModal').classList.remove('active');
-            stopCamera();
-        }
-
-        async function startCameraPreview() {
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('cameraPreview').srcObject = mediaStream;
-                document.getElementById('permissionAlert').innerHTML = "Camera Ready!";
-                document.getElementById('permissionAlert').style.background = "#d4edda";
-            } catch (err) {
-                document.getElementById('permissionAlert').innerHTML = "Error: Access Denied";
-                document.getElementById('permissionAlert').style.background = "#f8d7da";
-            }
-        }
-
-        function stopCamera() {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
-        }
-
-        function startVideoChatNow() {
-            window.location.href = '/chat?video=true';
-        }
-
+        
         document.addEventListener('DOMContentLoaded', updateStats);
     </script>
 </body>
